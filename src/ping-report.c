@@ -8,6 +8,20 @@
 #include <regex.h>
 #include <time.h>
 
+/*
+    -- create_daemon --
+    Desc :
+        Function which create a daemon
+    In-param :
+        None
+    Out-param :
+        None
+    Return value :
+        -1 : Error fork
+        0  : Daemon branch
+        1  : Parent process branch
+
+*/
 static int create_daemon(){
 
     /* Variables */
@@ -43,6 +57,17 @@ static int create_daemon(){
     return 0;
 }
 
+/*
+    -- get_ping_from_temp_log --
+    Desc :
+        Function which get the ping from a temp log containing the last ping did by the program
+    In-param :
+        None
+    Out-param :
+        None
+    Return value :
+        Ping value as a string
+*/
 static char* get_ping_from_temp_log(){
 
     /* Variables */
@@ -110,6 +135,17 @@ static char* get_ping_from_temp_log(){
     return ping;
 }
 
+/*
+    -- write_ping_log --
+    Desc :
+        Function which write a given ping in log file
+    In-param :
+        new_ping : string value of a ping
+    Out-param :
+        None
+    Return value :
+        None
+*/
 static void write_ping_log(char* new_ping){
     
     /* Variables */
@@ -133,6 +169,17 @@ static void write_ping_log(char* new_ping){
     free(new_ping);
 }
 
+/*
+    -- stats_ping --
+    Desc :
+        Function which calculate statistics about ping values, from log file, and then send a mail with stats.
+    In-param :
+        None
+    Out-param :
+        None
+    Return value :
+        None
+*/
 static void stats_ping(){
     
     /* Variables */
@@ -195,7 +242,7 @@ static void stats_ping(){
         strcat(remove_cmd,filename_log);        
         system(remove_cmd);
 
-        snprintf(mail_msg,256,"ping-report\n - Mean = %lf\n - Max = %lf\n - Min = %lf\n - Count = %d\n",mean,max,min,nb_ping);
+        snprintf(mail_msg,256,"ping-report\n - Mean = %lf\n - Max = %lf\n - Min = %lf\n - High ping = %d\n - Count = %d\n",mean,max,min,nb_high,nb_ping);
         sprintf(command, "echo \"%s\" | msmtp %s",mail_msg,dest_mail);
         fprintf(stderr,"%s\n",command);
         system(command);
@@ -205,7 +252,18 @@ static void stats_ping(){
     }
 }
 
-static int daemon_work(){
+/*
+    -- daemon_work --
+    Desc :
+        Function which contain main loop of the daemon
+    In-param :
+        None
+    Out-param :
+        None
+    Return value :
+        None
+*/
+static void daemon_work(){
 
     /* Variables */
     int keep_working = 1;
@@ -239,6 +297,21 @@ static int daemon_work(){
     }
 }
 
+/*
+    -- main --
+    Desc :
+        Main function
+    In-param :
+        argc : argument count
+        argv : argument list
+    Out-param :
+        None
+    Return value :
+        0 : Normal end of program
+        1 : Error while creating daemon
+        2 : Parent process quit
+        3 : Unknown error
+*/
 int main(int argc, char** argv){
 
     /* Daemon creation */
