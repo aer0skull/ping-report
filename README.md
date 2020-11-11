@@ -2,12 +2,12 @@
 
 ## Installation
 
-Lancer la commande suivante pour créer le fichier éxéctuable :
-> make
+Lancer la commande suivante pour installer ping-report :
+> sudo ./install-ping-report.sh
 
 ## Utilisation
 
-Lancer l'éxécutable **ping-report** afin de lancer le daemon :
+Lancer la commande **ping-report** afin de lancer le daemon :
 > ping-report
 
 ## Arborescence fichier
@@ -15,6 +15,3 @@ Lancer l'éxécutable **ping-report** afin de lancer le daemon :
 src : dossier contenant les fichier sources du programme
 
 ## Descriptions fonctions
-
-
-
