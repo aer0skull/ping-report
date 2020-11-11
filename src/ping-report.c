@@ -132,6 +132,7 @@ static char* get_ping_from_temp_log(){
     free(pmatch);
     fclose(fd);
 
+    /* if ping is null, then it must mean that the ping request was lost */
     if(ping == NULL){
         ping = malloc(sizeof(char) * 5);
         strcpy(ping,"LOSS");
@@ -215,9 +216,11 @@ static void stats_ping(){
     if(fd != NULL){
         /* Read file */
         while(getline(&read_line,&n,fd) != -1){
-            if(strcmp(read_line,"LOSS")){
+            /* Check if the ping is flagged as LOSS */
+            if(!strcmp(read_line,"LOSS")){
                 nb_loss++;
             }else{
+                /* Evaluate the ping as a double */
                 ping = strtod(read_line,NULL);
                 /* Number of ping readed (for mean calculation) */
                 nb_ping++;
@@ -248,11 +251,13 @@ static void stats_ping(){
         mean = sum / (double) nb_ping;
         fclose(fd);
 
+        /* remove all-ping.log */
         strcpy(remove_cmd,"rm -f ");
         strcat(remove_cmd,filename_log);        
         system(remove_cmd);
 
-        snprintf(mail_msg,256,"ping-report\n - Mean = %lf\n - Max = %lf\n - Min = %lf\n - High = %d\n - Loss = %d\n - Count = %d\n",mean,max,min,nb_high,nb_loss,nb_ping);
+        /* Sendmail command */
+        snprintf(mail_msg,256,"ping-report\n - Mean = %lf\n - Max = %lf\n - Min = %lf\n - High = %d\n - Loss = %d\n - Reached = %d\n",mean,max,min,nb_high,nb_loss,nb_ping);
         sprintf(command, "echo \"%s\" | msmtp %s",mail_msg,dest_mail);
         fprintf(stderr,"%s\n",command);
         system(command);
@@ -293,13 +298,19 @@ static void daemon_work(){
 
     /* Main loop */
     while(keep_working){
+        /* Ping request */
         system(command);
+        /* Get ping value as a string */
         ping = get_ping_from_temp_log();
         if(ping != NULL) {
+            /* Write ping in all-ping.log */
             write_ping_log(ping);
         }
+
+        /* Get time */
         t = time(NULL);
         utc_time = localtime(&t);
+        /* if time = HH:00, send mail */
         if(utc_time->tm_min == 0){
             stats_ping();
             sleep(60);
