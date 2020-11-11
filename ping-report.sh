@@ -1,2 +1,2 @@
 #!/bin/bash
-/opt/bin/ping-report
+/opt/ping-report/bin/ping-report

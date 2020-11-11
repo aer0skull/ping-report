@@ -79,7 +79,7 @@ static char* get_ping_from_temp_log(){
     int rc;
     size_t nmatch = 2;
     regmatch_t* pmatch;
-    char* ping;
+    char* ping = NULL;
     int start;
     int end;
     size_t size_ping;
@@ -131,6 +131,11 @@ static char* get_ping_from_temp_log(){
     free(p_reg);
     free(pmatch);
     fclose(fd);
+
+    if(ping == NULL){
+        ping = malloc(sizeof(char) * 5);
+        strcpy(ping,"LOSS");
+    }
 
     return ping;
 }
@@ -189,6 +194,7 @@ static void stats_ping(){
     double min = 100.0;
     double mean = 0.0;
     int nb_high = 0;
+    int nb_loss = 0;
     int nb_ping = 0;
     FILE* fd;
     char filename_log[64] = "";
@@ -209,25 +215,29 @@ static void stats_ping(){
     if(fd != NULL){
         /* Read file */
         while(getline(&read_line,&n,fd) != -1){
-            ping = strtod(read_line,NULL);
-            /* Number of ping readed (for mean calculation) */
-            nb_ping++;
-            /* Max ping */
-            if(ping > max){
-                max = ping;
-            }
-            /* Min ping */
-            if(ping < min){
-                min = ping;
-            }
-            /* Number of ping above 100 ms */
-            if(ping > 100.0){
-                nb_high++;
-            }
-            /* Sum (for mean calculation) */
-            sum += ping;
-            free(read_line);
-            n = 0;    
+            if(strcmp(read_line,"LOSS")){
+                nb_loss++;
+            }else{
+                ping = strtod(read_line,NULL);
+                /* Number of ping readed (for mean calculation) */
+                nb_ping++;
+                /* Max ping */
+                if(ping > max){
+                    max = ping;
+                }
+                /* Min ping */
+                if(ping < min){
+                    min = ping;
+                }
+                /* Number of ping above 100 ms */
+                if(ping > 100.0){
+                    nb_high++;
+                }
+                /* Sum (for mean calculation) */
+                sum += ping;
+                free(read_line);
+                n = 0;
+            }   
         }
     
         if(read_line != NULL){
@@ -242,7 +252,7 @@ static void stats_ping(){
         strcat(remove_cmd,filename_log);        
         system(remove_cmd);
 
-        snprintf(mail_msg,256,"ping-report\n - Mean = %lf\n - Max = %lf\n - Min = %lf\n - High ping = %d\n - Count = %d\n",mean,max,min,nb_high,nb_ping);
+        snprintf(mail_msg,256,"ping-report\n - Mean = %lf\n - Max = %lf\n - Min = %lf\n - High = %d\n - Loss = %d\n - Count = %d\n",mean,max,min,nb_high,nb_loss,nb_ping);
         sprintf(command, "echo \"%s\" | msmtp %s",mail_msg,dest_mail);
         fprintf(stderr,"%s\n",command);
         system(command);
