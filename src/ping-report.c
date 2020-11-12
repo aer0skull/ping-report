@@ -219,27 +219,36 @@ static void stats_ping(){
             /* Check if the ping is flagged as LOSS */
             if(!strcmp(read_line,"LOSS")){
                 nb_loss++;
+                free(read_line);
+                n = 0;
             }else{
                 /* Evaluate the ping as a double */
                 ping = strtod(read_line,NULL);
-                /* Number of ping readed (for mean calculation) */
-                nb_ping++;
-                /* Max ping */
-                if(ping > max){
-                    max = ping;
+                /* Test null ping */
+                if(ping == 0.0){
+                    /* Ignore null ping */
+                    free(read_line);
+                    n = 0;
+                }else{
+                    /* Number of ping readed (for mean calculation) */
+                    nb_ping++;
+                    /* Max ping */
+                    if(ping > max){
+                        max = ping;
+                    }
+                    /* Min ping */
+                    if(ping < min){
+                        min = ping;
+                    }
+                    /* Number of ping above 100 ms */
+                    if(ping > 100.0){
+                        nb_high++;
+                    }
+                    /* Sum (for mean calculation) */
+                    sum += ping;
+                    free(read_line);
+                    n = 0;
                 }
-                /* Min ping */
-                if(ping < min){
-                    min = ping;
-                }
-                /* Number of ping above 100 ms */
-                if(ping > 100.0){
-                    nb_high++;
-                }
-                /* Sum (for mean calculation) */
-                sum += ping;
-                free(read_line);
-                n = 0;
             }   
         }
     
