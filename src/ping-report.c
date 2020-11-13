@@ -8,6 +8,36 @@
 #include <regex.h>
 #include <time.h>
 
+/* Globals */
+
+/* struct stats_ping : Handle ping data */
+typedef struct stats_ping{
+    double sum;
+    double max;
+    double min;
+    double mean;
+    int nb_high;
+    int nb_loss;
+    int nb_ping; 
+} stats_ping;
+
+/* stats_ping_default : default value for stats_ping (init) */
+static stats_ping stats_ping_default = {
+    0.0,    /* sum */
+    0.0,    /* max */
+    100.0,  /* min */
+    0.0,   /* mean */
+    0,  /* nb_high */
+    0,  /* nb_loss */
+    0   /* nb_ping */
+};
+
+/*@observer@*/static char HOME[32];
+static char ALL_PING[64];
+static char LAST_PING[64];
+
+/* End globals */
+
 /*
     -- create_daemon --
     Desc :
@@ -29,7 +59,7 @@ static int create_daemon(){
     int fd;
 
     /* Fork a new process */
-    pid = fork();
+    pid = (pid_t) fork();
 
     if(pid < 0){
         /* Error while forking */
@@ -44,14 +74,14 @@ static int create_daemon(){
     /* Son process branch */
     
     /* Set file permissions */
-    umask(0);
+    (void) umask(0);
 
     /* Change working directory to root directory */
-    chdir("/");
+    (void) chdir("/");
 
     /* Close all open file descriptors */
-    for(fd = sysconf(_SC_OPEN_MAX); fd >= 0; fd--){
-        close(fd);
+    for(fd = (int) sysconf(_SC_OPEN_MAX); fd >= 0; fd--){
+        (void) close(fd);
     }
 
     return 0;
@@ -66,78 +96,102 @@ static int create_daemon(){
     Out-param :
         None
     Return value :
-        Ping value as a string
+        Ping value as a string or NULL if an error occured
 */
-static char* get_ping_from_temp_log(){
+/*@null@*/static char* get_ping_from_temp_log(){
 
     /* Variables */
     FILE* fd = NULL;
-    char filename[64];
     char* read_line = NULL;
     size_t n = 0;
-    regex_t *p_reg = malloc(sizeof(*p_reg));
     int rc;
     size_t nmatch = 2;
+    regex_t *p_reg;
     regmatch_t* pmatch;
     char* ping = NULL;
     int start;
     int end;
     size_t size_ping;
 
-    /* Create filename string */
-    strcpy(filename,getenv("HOME"));
-    strcat(filename,"/log/last-ping.log");
+    /* regex struct memory allocation */
+    p_reg = (regex_t *) malloc(sizeof(*p_reg));
+    if(p_reg == NULL){
+        return ping; /* NULL */
+    }
 
     /* Open ping log file */ 
-    fd = fopen(filename,"r");
+    fd = fopen(LAST_PING,"r");
+    if(fd == NULL){
+        free(p_reg);
+        return ping; /* NULL */
+    }
 
     /* Construct regex to get ping from log file */
-    regcomp(p_reg,"time=(.*) ms",REG_EXTENDED);    
+    if(regcomp(p_reg,"time=(.*) ms",REG_EXTENDED) != 0){
+        if(p_reg != NULL){
+            free(p_reg);
+        }
+        return ping; /* NULL */
+    }    
+
+    /* match info memory allocation */
     pmatch = malloc(sizeof(*pmatch) * nmatch);
+    if(pmatch == NULL){
+        (void) fclose(fd);
+        regfree(p_reg);
+        free(p_reg);
+        return ping; /* NULL */
+    }
 
-    if(fd != NULL){
+    /* Read file */
+    while(getline(&read_line,&n,fd) != -1){
 
-        /* Read file */
-        while(getline(&read_line,&n,fd) != -1){
+        if(read_line == NULL){
+            break;
+        }
 
-            /* Exec regex to find ping */
-            rc = regexec(p_reg,read_line, nmatch, pmatch, 0);
+        /* Exec regex to find ping */
+        rc = regexec(p_reg,read_line, nmatch, pmatch, 0);
 
-            if(rc == 0){
+        if(rc == 0){
 
-                /* Extract ping from read line */
-                start = pmatch[1].rm_so;
-                end = pmatch[1].rm_eo;
-                size_ping = end - start;
-                ping = malloc(sizeof(char) * (size_ping+2));
-                strncpy(ping, &read_line[start], size_ping);
-                ping[size_ping]='\n';
-                ping[size_ping+1]='\0';
+            /* Extract ping position from read line */
+            start = (int) pmatch[1].rm_so;
+            end = (int) pmatch[1].rm_eo;
+            size_ping = (size_t) (end - start);
+
+            /* ping string memory allocation */
+            ping = malloc(sizeof(char) * (size_ping+2));
+            if(ping == NULL){
                 free(read_line);
                 n = 0;
-                break;                
+                break;
             }
 
+            /* Create ping string */
+            strncpy(ping, &read_line[start], size_ping);
+            ping[size_ping]='\n';
+            ping[size_ping+1]='\0';
+
+            /* Free memory */
             free(read_line);
             n = 0;
+            break;                
         }
-    }else{
-        regfree(p_reg);
-        free(pmatch);
-        return NULL;
+        free(read_line);
+        n = 0;
     }
     
+    /* free allocated memory */
     regfree(p_reg);
     free(p_reg);
     free(pmatch);
-    fclose(fd);
-
-    /* if ping is null, then it must mean that the ping request was lost */
-    if(ping == NULL){
-        ping = malloc(sizeof(char) * 5);
-        strcpy(ping,"LOSS");
+    if(read_line != NULL){
+        free(read_line);
     }
+    (void) fclose(fd);
 
+    /* ping may be null, then it must mean that the ping request was lost */
     return ping;
 }
 
@@ -156,18 +210,20 @@ static void write_ping_log(char* new_ping){
     
     /* Variables */
     FILE* fd;
-    char filename_log[64] = "";
-
-    /* Create filename string */
-    strcpy(filename_log,getenv("HOME"));
-    strcat(filename_log,"/log/all-ping.log");
 
     /* Open log file */
-    fd = fopen(filename_log,"a+");
+    fd = fopen(ALL_PING,"a+");
     
     if(fd != NULL){
-        fwrite(new_ping, sizeof(char), strlen(new_ping), fd);
-        fclose(fd);
+        if(new_ping == NULL){
+            new_ping = (char *) malloc(5*sizeof(char));
+            if(new_ping == NULL){
+                return;
+            }
+            (void) snprintf(new_ping,sizeof(new_ping),"LOSS");
+        }
+        (void) fwrite(new_ping, sizeof(char), strlen(new_ping), fd);
+        (void) fclose(fd);
     }else{
         perror("write ping : ");
     }
@@ -176,106 +232,159 @@ static void write_ping_log(char* new_ping){
 }
 
 /*
-    -- stats_ping --
+    -- remove_file --
     Desc :
-        Function which calculate statistics about ping values, from log file, and then send a mail with stats.
+        Remove a file from filesystem
     In-param :
-        None
+        filename : the name of the file to remove
     Out-param :
         None
     Return value :
         None
 */
-static void stats_ping(){
+static void remove_file(char* filename){
+
+        /* Variable */
+        char remove_cmd[128];
+        
+        /* remove file */
+        strcpy(remove_cmd,"rm -f ");
+        strcat(remove_cmd,filename);        
+        (void) system(remove_cmd);
+
+}
+
+/*
+    -- send_stats_mail --
+    Desc :
+        Send a mail with all ping stats data
+    In-param :
+        stats : ping stats data
+    Out-param :
+        None
+    Return value :
+        None
+*/
+static void send_stats_mail(stats_ping *stats){
+    
+    /* Variable */
+    char mail_msg[256];
+    char dest_mail[] = "maxime.menault@gmail.com";
+    char command[512];       
+        
+    /* Sendmail command */
+    (void) snprintf(mail_msg,256,"ping-report\n - Mean = %lf\n - Max = %lf\n - Min = %lf\n - High = %d\n - Loss = %d\n - Reached = %d\n",
+                    stats->mean,stats->max,stats->min,stats->nb_high,stats->nb_loss,stats->nb_ping);
+    (void) snprintf(command,512,"echo \"%s\" | msmtp %s",mail_msg,dest_mail);
+    (void) system(command);
+}
+
+/*
+    -- get_stats_ping --
+    Desc :
+        Function which calculate statistics about ping values, from log file.
+    In-param :
+        None
+    Out-param :
+        stats : struct with all ping stats data filled
+    Return value :
+        None
+*/
+static void get_stats_ping(stats_ping *stats){
     
     /* Variables */
     double ping = 0.0;
-    double sum = 0.0;
-    double max = 0.0;
-    double min = 100.0;
-    double mean = 0.0;
-    int nb_high = 0;
-    int nb_loss = 0;
-    int nb_ping = 0;
     FILE* fd;
-    char filename_log[64] = "";
     char* read_line = NULL;
     size_t n = 0;
-    char mail_msg[256];
-    char dest_mail[] = "maxime.menault@gmail.com";
-    char command[512];
-    char remove_cmd[128];
 
-    /* Create filename string */
-    strcpy(filename_log,getenv("HOME"));
-    strcat(filename_log,"/log/all-ping.log");
 
     /* Open log file */
-    fd = fopen(filename_log,"r");
+    fd = fopen(ALL_PING,"r");
     
     if(fd != NULL){
         /* Read file */
         while(getline(&read_line,&n,fd) != -1){
+            
+            /* Check getline error */
+            if(read_line == NULL){
+                break;
+            }
+
             /* Check if the ping is flagged as LOSS */
-            if(!strcmp(read_line,"LOSS")){
-                nb_loss++;
-                free(read_line);
-                n = 0;
+            if(strcmp(read_line,"LOSS") == 0){
+                stats->nb_loss++;
             }else{
                 /* Evaluate the ping as a double */
                 ping = strtod(read_line,NULL);
                 /* Test null ping */
-                if(ping == 0.0){
+                if(ping < 0.1){
                     /* Ignore null ping */
-                    free(read_line);
-                    n = 0;
                 }else{
                     /* Number of ping readed (for mean calculation) */
-                    nb_ping++;
+                    stats->nb_ping++;
                     /* Max ping */
-                    if(ping > max){
-                        max = ping;
+                    if(ping > stats->max){
+                        stats->max = ping;
                     }
                     /* Min ping */
-                    if(ping < min){
-                        min = ping;
+                    if(ping < stats->min){
+                        stats->min = ping;
                     }
                     /* Number of ping above 100 ms */
                     if(ping > 100.0){
-                        nb_high++;
+                        stats->nb_high++;
                     }
                     /* Sum (for mean calculation) */
-                    sum += ping;
-                    free(read_line);
-                    n = 0;
+                    stats->sum += ping;
                 }
-            }   
-        }
-    
-        if(read_line != NULL){
+            } 
             free(read_line);
+            n = 0;
         }
     
         /* Mean calculation */
-        mean = sum / (double) nb_ping;
-        fclose(fd);
-
-        /* remove all-ping.log */
-        strcpy(remove_cmd,"rm -f ");
-        strcat(remove_cmd,filename_log);        
-        system(remove_cmd);
-
-        /* Sendmail command */
-        snprintf(mail_msg,256,"ping-report\n - Mean = %lf\n - Max = %lf\n - Min = %lf\n - High = %d\n - Loss = %d\n - Reached = %d\n",mean,max,min,nb_high,nb_loss,nb_ping);
-        sprintf(command, "echo \"%s\" | msmtp %s",mail_msg,dest_mail);
-        fprintf(stderr,"%s\n",command);
-        system(command);
+        stats->mean = stats->sum / (double) stats->nb_ping;
+        (void) fclose(fd);
 
     }else{
         perror("stats : ");
     }
+
+    if(read_line != NULL){
+        free(read_line);
+    }
 }
 
+/*
+    -- init_globals --
+    Desc :
+        Init globals variables
+    In-param :
+        None
+    Out-param :
+        None
+    Return value :
+        0 on succes, 1 when an error occured
+*/
+static int init_globals(){
+    /* Set globals values */
+    char *home = getenv("HOME");
+    if(home == NULL){
+        return 1;
+    }
+
+    /* HOME */
+    (void) snprintf(HOME,sizeof(HOME),"%s",home);
+    
+    /* ALL_PING */
+    (void) snprintf(ALL_PING,sizeof(ALL_PING),"%s/log/all-ping.log",HOME);
+
+    /* LAST_PING */
+    (void) snprintf(LAST_PING,sizeof(LAST_PING),"%s/log/last-ping.log",HOME);
+ 
+    return 0;
+}
 /*
     -- daemon_work --
     Desc :
@@ -293,22 +402,23 @@ static void daemon_work(){
     int keep_working = 1;
     char* ping = NULL;
     char command[128];
-    char filename[64];
+    int flag = 1;
     time_t t;
     struct tm* utc_time;
+    stats_ping stats = stats_ping_default;
 
-    /* Create filename string */
-    strcpy(filename,getenv("HOME"));
-    strcat(filename,"/log/last-ping.log");
-    
+    if(init_globals() != 0){
+        return;
+    }
+   
     /* Create ping command (with output in filename) */
     strcpy(command,"ping -c 1 1.1.1.1 > ");
-    strcat(command,filename);
+    strcat(command,LAST_PING);
 
     /* Main loop */
-    while(keep_working){
+    while(keep_working != 0){
         /* Ping request */
-        system(command);
+        (void) system(command);
         /* Get ping value as a string */
         ping = get_ping_from_temp_log();
         if(ping != NULL) {
@@ -319,10 +429,22 @@ static void daemon_work(){
         /* Get time */
         t = time(NULL);
         utc_time = localtime(&t);
+
+        /* Set flag to avoid sending numerous mail at HH:00 */
+        if((utc_time->tm_min != 0)&& (flag == 0)){
+            flag = 1;
+        }
+
         /* if time = HH:00, send mail */
-        if(utc_time->tm_min == 0){
-            stats_ping();
-            sleep(60);
+        if((utc_time->tm_hour == 0) && (utc_time->tm_min == 0) && (flag != 0)){
+            /* Get ping stats */
+            get_stats_ping(&stats);
+            /* Remove all-ping.log file */
+            remove_file(ALL_PING);
+            /* Send mail */
+            send_stats_mail(&stats);
+            /* Set flag to avoid sending numerous mail at HH:00 */
+            flag = 0;
         }
     }
 }
@@ -342,7 +464,7 @@ static void daemon_work(){
         2 : Parent process quit
         3 : Unknown error
 */
-int main(int argc, char** argv){
+int main(/*int argc, char** argv*/){
 
     /* Daemon creation */
     switch(create_daemon()){
