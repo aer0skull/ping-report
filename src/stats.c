@@ -21,7 +21,7 @@
     Return value :
         None
 */
-void set_stats_ping_default(stats_ping* stats){
+void set_stats_ping_default(/*@out@*/stats_ping* stats){
 
     stats->sum = 0.0;
     stats->max = 0.0;

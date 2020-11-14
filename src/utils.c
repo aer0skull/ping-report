@@ -21,7 +21,7 @@ void write_pid_file(){
 
     /* Variables */
     FILE* fd;
-    pid_t pid = getpid();
+    pid_t pid = (pid_t) getpid();
     char pid_str[16];
 
     fd = fopen("/var/log/ping-report/pid.log","w+");
@@ -30,11 +30,10 @@ void write_pid_file(){
         return;
     }
     
-    (void) snprintf(pid_str,16,"%d",pid);
+    (void) snprintf(pid_str,16,"%d",(int) pid);
+    (void) fwrite(pid_str,strlen(pid_str),1,fd);
+    (void) fclose(fd);
 
-    fwrite(pid_str,strlen(pid_str),1,fd);
-
-    fclose(fd);
 }
 
 /*

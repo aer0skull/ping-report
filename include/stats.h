@@ -12,10 +12,10 @@ typedef struct stats_ping{
     int nb_ping;
 } stats_ping;
 
-char* get_ping_from_temp_log();
+/*@null@*/char* get_ping_from_temp_log();
 void write_ping_log(char* new_ping);
 void get_stats_ping(stats_ping *stats);
 void send_stats_mail(stats_ping *stats);
-void set_stats_ping_default(stats_ping* stats);
+void set_stats_ping_default(/*@out@*/stats_ping* stats);
 
 #endif
