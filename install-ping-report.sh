@@ -5,6 +5,7 @@ CUR_DIR=`pwd`
 OPT_DIR=/opt/ping-report
 BIN_OPT_DIR=/opt/ping-report/bin
 BIN_DIR=/bin
+LOG_DIR=/var/log/ping-report
 BIN=ping-report
 SCRIPT=ping-report.sh
 SCRIPT_DIR=/opt/ping-report/ping-report.sh
@@ -24,6 +25,13 @@ if test -d "$BIN_OPT_DIR"; then
     echo "bin opt dir already exists, no actions needed."
 else
     mkdir $BIN_OPT_DIR
+fi
+
+#Create LOG_DIR
+if test -d "$LOG_DIR"; then
+    echo "log dir already exists, no actions needed"
+else
+    mkdir $LOG_DIR
 fi
 
 #Compile ping-report

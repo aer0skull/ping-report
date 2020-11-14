@@ -84,6 +84,10 @@ void daemon_work(){
 
     set_stats_ping_default(&stats);
 
+    system("echo fuck1 > /home/maxime/dev/ping-report/fuck.txt");
+    write_pid_file();
+    system("echo fuck2 >> /home/maxime/dev/ping-report/fuck.txt");
+
     if(init_globals() != 0){
         return;
     }

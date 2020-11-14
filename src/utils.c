@@ -1,7 +1,41 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+
 #include "../include/utils.h"
+
+/*
+    -- write_pid_file --
+    Desc :
+        write pid in a log file
+    In-param :
+        None
+    Out-param :
+        None
+    Return value :
+        None
+*/
+void write_pid_file(){
+
+    /* Variables */
+    FILE* fd;
+    pid_t pid = getpid();
+    char pid_str[16];
+
+    fd = fopen("/var/log/ping-report/pid.log","w+");
+
+    if(fd == NULL){
+        return;
+    }
+    
+    (void) snprintf(pid_str,16,"%d",pid);
+
+    fwrite(pid_str,strlen(pid_str),1,fd);
+
+    fclose(fd);
+}
 
 /*
     -- get_home --
