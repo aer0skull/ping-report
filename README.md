@@ -18,9 +18,9 @@ Lancer la commande **ping-report restart** afin de relancer le daemon :
 
 ## Arborescence fichier
 
-###src
+### src
 dossier contenant les fichiers sources du programme
-###include
+### include
 dossier contenant les fichiers d'en-tête du programme
 
 ## Descriptions fonctions
