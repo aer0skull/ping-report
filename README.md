@@ -22,5 +22,7 @@ Lancer la commande **ping-report restart** afin de relancer le daemon :
 dossier contenant les fichiers sources du programme
 ### include
 dossier contenant les fichiers d'en-tête du programme
+### res
+dossier contenant les fichiers ressources du programme 
 
 ## Descriptions fonctions
