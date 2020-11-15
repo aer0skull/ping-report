@@ -126,7 +126,7 @@ void daemon_work(){
         }
 
         /* if time == HH:00, insert stats in db */
-        if((utc_time->tm_min != 0)&& (flag != 0)){
+        if((utc_time->tm_min == 0) && (flag != 0)){
             get_stats_ping(&stats);
             insert_ping_stats(stats);
             flag = 0;
