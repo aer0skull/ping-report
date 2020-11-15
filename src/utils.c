@@ -7,7 +7,7 @@
 #include "../include/utils.h"
 
 /* File globals */
-static const char CONF_FILE[] = "/etc/ping-report/ping-report.conf";
+static const char CONF_FILE[] = "/etc/opt/ping-report/ping-report.conf";
 static configuration configs = {NULL, 0};
 
 /*

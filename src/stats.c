@@ -9,6 +9,7 @@
 
 #include "../include/utils.h"
 #include "../include/stats.h"
+#include "../include/db-sqlite.h"
 
 /*
     -- set_stats_ping_default --
@@ -174,6 +175,7 @@ void write_ping_log(char* new_ping){
             (void) snprintf(new_ping,5*sizeof(char),"LOSS");
         }
         (void) fwrite(new_ping, sizeof(char), strlen(new_ping), fd);
+        (void) insert_ping(strtod(new_ping,NULL));
         (void) fclose(fd);
     }else{
         perror("write ping : ");

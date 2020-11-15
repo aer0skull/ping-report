@@ -6,8 +6,11 @@ OPT_DIR=/opt/ping-report
 BIN_OPT_DIR=/opt/ping-report/bin
 BIN_DIR=/bin
 LOG_DIR=/var/log/ping-report
-CONF_DIR=/etc/ping-report
+CONF_DIR=/etc/opt/ping-report
 CONF=./res/ping-report.conf
+DB_SCRIPT=./res/ping-report-db.sql
+DB_DIR=/srv/ping-report
+DB=/srv/ping-report/ping-report.db
 BIN=ping-report
 SCRIPT=./res/ping-report.sh
 SCRIPT_DIR=/opt/ping-report/ping-report.sh
@@ -43,6 +46,13 @@ else
     mkdir $CONF_DIR
 fi
 
+#Create DB_DIR
+if test -d "$DB_DIR"; then
+    echo "database dir already exists, no actions needed"
+else
+    mkdir $DB_DIR
+fi
+
 #Compile ping-report
 make
 
@@ -67,3 +77,13 @@ else
     cd $CUR_DIR
 fi
 
+#Create SQLITE DB
+
+
+if test -f "$DB"; then
+    echo "db already exists, no actions needed"
+else
+    cd $DB_DIR
+    sqlite3 ping-report.db < $CUR_DIR/$DB_SCRIPT
+    cd $CUR_DIR
+fi

@@ -10,6 +10,7 @@
 #include "../include/daemon.h"
 #include "../include/utils.h"
 #include "../include/stats.h"
+#include "../include/db-sqlite.h"
 
 /*
     -- create_daemon --
@@ -94,7 +95,12 @@ void daemon_work(){
 
     /* ping sleep time (from config file) */
     ping_interval = get_ping_interval();
-    
+
+    /* Connect db sqlite */
+    if(db_connect()){
+        return;
+    }
+
     /* Create ping command (with output in filename) */
     strcpy(command,"ping -c 1 1.1.1.1 > ");
     strcat(command,get_last_ping());
@@ -119,7 +125,14 @@ void daemon_work(){
             flag = 1;
         }
 
-        /* if time = HH:00, send mail */
+        /* if time == HH:00, insert stats in db */
+        if((utc_time->tm_min != 0)&& (flag != 0)){
+            get_stats_ping(&stats);
+            insert_ping_stats(stats);
+            flag = 0;
+        }
+
+        /* if time = 00:00, send mail */
         if((utc_time->tm_hour == 0) && (utc_time->tm_min == 0) && (flag != 0)){
             /* Get ping stats */
             get_stats_ping(&stats);
@@ -134,4 +147,7 @@ void daemon_work(){
         /* ping_interval */
         usleep(ping_interval*1000);
     }
+
+    /* Disconnect sqlite db */
+    db_disconnect();
 }
