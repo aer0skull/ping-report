@@ -6,8 +6,10 @@ OPT_DIR=/opt/ping-report
 BIN_OPT_DIR=/opt/ping-report/bin
 BIN_DIR=/bin
 LOG_DIR=/var/log/ping-report
+CONF_DIR=/etc/ping-report
+CONF=./res/ping-report.conf
 BIN=ping-report
-SCRIPT=ping-report.sh
+SCRIPT=./res/ping-report.sh
 SCRIPT_DIR=/opt/ping-report/ping-report.sh
 DYN_LINK=/bin/ping-report
 
@@ -34,6 +36,13 @@ else
     mkdir $LOG_DIR
 fi
 
+#Create CONF_DIR
+if test -d "$CONF_DIR"; then
+    echo "conf dir already exists, no actions needed"
+else
+    mkdir $CONF_DIR
+fi
+
 #Compile ping-report
 make
 
@@ -42,6 +51,9 @@ mv $BIN $BIN_OPT_DIR
 
 #Copy launch script to OPT_DIR
 cp $SCRIPT $OPT_DIR
+
+#Copy conf file to CONF_DIR
+cp $CONF $CONF_DIR
 
 #Create DYN_LINK
 if test -f "$DYN_LINK"; then

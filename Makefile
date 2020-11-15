@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-W -Wall
+CFLAGS=-W -Wall -pedantic
 LDFLAGS=-lsqlite3
 EXEC=ping-report
 SRC=$(wildcard src/*.c)

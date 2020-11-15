@@ -15,9 +15,9 @@
     Desc :
         Set default values for stats_ping struct
     In-param :
-        stats_ping struct to initialize
-    Out-param :
         None
+    Out-param :
+        stats : stats_ping struct to be initialized
     Return value :
         None
 */
@@ -226,7 +226,6 @@ void get_stats_ping(stats_ping *stats){
     FILE* fd;
     char* read_line = NULL;
     size_t n = 0;
-
 
     /* Open log file */
     fd = fopen(get_all_ping(),"r");

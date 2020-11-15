@@ -78,18 +78,23 @@ void daemon_work(){
     char* ping = NULL;
     char command[128];
     int flag = 1;
+    int ping_interval;
     time_t t;
     struct tm* utc_time;
     stats_ping stats;
-
     set_stats_ping_default(&stats);
 
-    write_pid_file();
-
+    /* Init utils globals */
     if(init_globals() != 0){
         return;
     }
 
+    /* Write daemon pid in log file */
+    write_pid_file();
+
+    /* ping sleep time (from config file) */
+    ping_interval = get_ping_interval();
+    
     /* Create ping command (with output in filename) */
     strcpy(command,"ping -c 1 1.1.1.1 > ");
     strcat(command,get_last_ping());
@@ -125,5 +130,8 @@ void daemon_work(){
             /* Set flag to avoid sending numerous mail at HH:00 */
             flag = 0;
         }
+
+        /* ping_interval */
+        usleep(ping_interval*1000);
     }
 }
