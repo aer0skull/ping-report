@@ -16,6 +16,9 @@ Lancer la commande **ping-report end** afin d'arreter le daemon :
 Lancer la commande **ping-report restart** afin de relancer le daemon :
 > ping-report restart
 
+Lancer la commande **ping-report status** afin de voir le status du daemon :
+> ping-report status
+
 ## Arborescence fichier
 
 ### src
