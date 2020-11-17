@@ -11,126 +11,6 @@
 #include "../include/stats.h"
 #include "../include/db-sqlite.h"
 
-/* Globals */
-static double max;
-static double min;
-static double mean;
-static int nb_high;
-static int nb_loss;
-static int nb_ping;
-
-/*
-    -- set_stats_ping_default --
-    Desc :
-        Set default values for stats_ping struct
-    In-param :
-        None
-    Out-param :
-        None
-    Return value :
-        None
-*/
-void set_stats_ping_default(){
-
-    max = 0.0;
-    min = 100.0;
-    mean = 0.0;
-    nb_high = 0;
-    nb_loss = 0;
-    nb_ping = 0;
-
-}
-
-/*
-    -- get_max --
-    Desc :
-        Get max (stats)
-    In-param :
-        None
-    Out-param :
-        None
-    Return value :
-        stats max
-*/
-double get_max(){
-    return max;
-}
-
-/*
-    -- get_min --
-    Desc :
-        Get min (stats)
-    In-param :
-        None
-    Out-param :
-        None
-    Return value :
-        stats min
-*/
-double get_min(){
-    return min;
-}
-
-/*
-    -- get_mean --
-    Desc :
-        Get mean (stats)
-    In-param :
-        None
-    Out-param :
-        None
-    Return value :
-        stats mean
-*/
-double get_mean(){
-    return mean;
-}
-
-/*
-    -- get_high --
-    Desc :
-        Get high (stats)
-    In-param :
-        None
-    Out-param :
-        None
-    Return value :
-        stats high
-*/
-int get_high(){
-    return nb_high;
-}
-
-/*
-    -- get_loss --
-    Desc :
-        Get loss (stats)
-    In-param :
-        None
-    Out-param :
-        None
-    Return value :
-        stats loss
-*/
-int get_loss(){
-    return nb_loss;
-}
-
-/*
-    -- get_reached --
-    Desc :
-        Get reached (stats)
-    In-param :
-        None
-    Out-param :
-        None
-    Return value :
-        stats reached
-*/
-int get_reached(){
-    return nb_ping;
-}
-
 /*
     -- get_ping_from_temp_log --
     Desc :
@@ -294,7 +174,7 @@ void write_ping_log(char* new_ping){
     Return value :
         None
 */
-void send_stats_mail(){
+static void send_stats_mail(double mean, double max, double min, int nb_high, int nb_loss, int nb_ping){
     
     /* Variable */
     char mail_msg[256];
@@ -310,7 +190,7 @@ void send_stats_mail(){
 
 
 /*
-    -- get_stats_ping --
+    -- set_stats_ping --
     Desc :
         Function which calculate statistics about ping values, from log file.
     In-param :
@@ -328,6 +208,12 @@ void set_stats_ping(){
     char* read_line = NULL;
     size_t n = 0;
     double sum = 0.0;
+    double max = 0.0;
+    double min = 100.0;
+    double mean = 0.0;
+    int nb_high = 0;
+    int nb_loss = 0;
+    int nb_ping = 0;
 
     /* Open log file */
     fd = fopen(get_all_ping(),"r");
@@ -376,6 +262,9 @@ void set_stats_ping(){
         /* Mean calculation */
         mean = sum / (double) nb_ping;
         (void) fclose(fd);
+
+        send_stats_mail(mean,max,min,nb_high,nb_loss,nb_ping);
+        insert_ping_stats(mean,max,min,nb_high,nb_loss,nb_ping);
 
     }else{
         perror("stats : ");
