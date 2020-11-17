@@ -8,7 +8,18 @@
 
 /* File globals */
 static const char CONF_FILE[] = "/etc/opt/ping-report/ping-report.conf";
-static configuration configs = {NULL, 0};
+
+typedef struct configuration{
+    int log_file_dir;
+    int ping_interval;
+} configuration;
+
+static configuration configs = {0, 0};
+
+static const char *log_file[] = {
+    "/var/log/ping-report",
+    "/root/log/ping-report"
+};
 
 /*
     -- get_ping_interval --
@@ -23,6 +34,21 @@ static configuration configs = {NULL, 0};
 */
 int get_ping_interval(){
     return configs.ping_interval;
+}
+
+/*
+    -- get_log_file_dir --
+    Desc :
+        Get log file from configuration
+    In-param :
+        None
+    Out-param :
+        None 
+    Return value :
+        None 
+*/
+static const char* get_log_file_dir(){
+    return log_file[configs.log_file_dir];
 }
 
 /*
@@ -41,7 +67,6 @@ void set_configuration(){
     /* Variables */
     FILE* fd = NULL;
     char* config_line = NULL;
-    char* string_value = NULL;
     int   int_value = 0;
 
     fd = fopen(CONF_FILE,"r");
@@ -49,27 +74,17 @@ void set_configuration(){
     if(fd != NULL){
         config_line = (char *) malloc(128*sizeof(char));
         if(config_line != NULL){
-            string_value = (char *) malloc(128*sizeof(char));
-            if(string_value != NULL){
-                while(fgets(config_line, 128, fd) != NULL){
-                    if(config_line[0] == '#'){
-                        // Comment line : ignore it
-                    }else{
-                        if(sscanf(config_line,"log_file_dir=%s\n",string_value) == 1){
-                            if(configs.log_file_dir == NULL){
-                                configs.log_file_dir = strdup(string_value);
-                                if(configs.log_file_dir == NULL){
-                                    // Error, quit function
-                                    break;
-                                }
-                            }
-                        }
-                        if(sscanf(config_line,"ping_interval=%d\n",&int_value) == 1){
-                                configs.ping_interval = int_value;
-                        }
+            while(fgets(config_line, 128, fd) != NULL){
+                if(config_line[0] == '#'){
+                    // Comment line : ignore it
+                }else{
+                    if(sscanf(config_line,"log_file_dir=%d\n",&int_value) == 1){
+                        configs.log_file_dir = int_value;
+                    }
+                    if(sscanf(config_line,"ping_interval=%d\n",&int_value) == 1){
+                        configs.ping_interval = int_value;
                     }
                 }
-                free(string_value);
             }
             free(config_line);
         }
@@ -96,7 +111,7 @@ void write_pid_file(){
     char pid_str[16];
     char log_filename[32];
 
-    (void) snprintf(log_filename,32,"%s/pid.log",configs.log_file_dir);
+    (void) snprintf(log_filename,32,"%s/pid.log",get_log_file_dir());
 
     fd = fopen(log_filename,"w+");
 
@@ -124,7 +139,7 @@ void write_pid_file(){
 char* get_all_ping(){
     static char ALL_PING[64] = "\0";
     if(ALL_PING[0] == '\0'){
-        (void) snprintf(ALL_PING,64*sizeof(char),"%s/all-ping.log",configs.log_file_dir);
+        (void) snprintf(ALL_PING,64*sizeof(char),"%s/all-ping.log",get_log_file_dir());
     }
     return ALL_PING;
 }
@@ -143,7 +158,7 @@ char* get_all_ping(){
 char* get_last_ping(){
     static char LAST_PING[64] = "\0";
     if(LAST_PING[0] == '\0'){
-        (void) snprintf(LAST_PING,64*sizeof(char),"%s/last-ping.log",configs.log_file_dir);
+        (void) snprintf(LAST_PING,64*sizeof(char),"%s/last-ping.log",get_log_file_dir());
     }
     return LAST_PING;
 }
