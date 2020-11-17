@@ -165,8 +165,7 @@ void remove_file(char* filename){
         char remove_cmd[128];
         
         /* remove file */
-        strcpy(remove_cmd,"rm -f ");
-        strcat(remove_cmd,filename);        
+        (void) snprintf(remove_cmd, 128, "rm -f %s",filename);        
         (void) system(remove_cmd);
 
 }

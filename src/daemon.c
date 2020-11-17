@@ -102,8 +102,7 @@ void daemon_work(){
     }
 
     /* Create ping command (with output in filename) */
-    strcpy(command,"ping -c 1 1.1.1.1 > ");
-    strcat(command,get_last_ping());
+    (void) snprintf(command,128,"ping -c 1 1.1.1.1 > %s",get_last_ping());
 
     /* Main loop */
     while(keep_working != 0){

@@ -118,7 +118,7 @@ void set_stats_ping_default(/*@out@*/stats_ping* stats){
             }
 
             /* Create ping string */
-            strncpy(ping, &read_line[start], size_ping);
+            (void) strncpy(ping, &read_line[start], size_ping);
             ping[size_ping]='\n';
             ping[size_ping+1]='\0';
 
