@@ -102,7 +102,7 @@ void daemon_work(){
     /* Main loop */
     while(keep_working != 0){
         /* Loop variables */
-        char* ping = NULL;
+        char* ping;
         time_t t;
         struct tm* utc_time;
         
@@ -142,6 +142,8 @@ void daemon_work(){
 
         /* ping_interval */
         usleep(ping_interval*1000);
+
+        keep_working = (int) t;
     }
 
     /* Disconnect sqlite db */
