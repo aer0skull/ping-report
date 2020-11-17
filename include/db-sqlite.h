@@ -4,6 +4,6 @@
 int db_connect();
 int db_disconnect();
 int insert_ping(double ping);
-int insert_ping_stats(stats_ping stats);
+int insert_ping_stats();
 
 #endif

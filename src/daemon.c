@@ -82,8 +82,7 @@ void daemon_work(){
     int ping_interval;
     time_t t;
     struct tm* utc_time;
-    stats_ping stats;
-    set_stats_ping_default(&stats);
+    set_stats_ping_default();
 
     /* Init utils globals */
     if(init_globals() != 0){
@@ -126,19 +125,19 @@ void daemon_work(){
 
         /* if time == HH:00, insert stats in db */
         if((utc_time->tm_min == 0) && (flag != 0)){
-            get_stats_ping(&stats);
-            insert_ping_stats(stats);
+            get_stats_ping();
+            insert_ping_stats();
             flag = 0;
         }
 
         /* if time = 00:00, send mail */
         if((utc_time->tm_hour == 0) && (utc_time->tm_min == 0) && (flag != 0)){
             /* Get ping stats */
-            get_stats_ping(&stats);
+            get_stats_ping();
             /* Remove all-ping.log file */
             remove_file(get_all_ping());
             /* Send mail */
-            send_stats_mail(&stats);
+            send_stats_mail();
             /* Set flag to avoid sending numerous mail at HH:00 */
             flag = 0;
         }

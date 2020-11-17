@@ -11,6 +11,19 @@
 #include "../include/stats.h"
 #include "../include/db-sqlite.h"
 
+/* Globals */
+/* struct stats_ping : Handle ping data */
+typedef struct stats_ping{
+    double max;
+    double min;
+    double mean;
+    int nb_high;
+    int nb_loss;
+    int nb_ping;
+} stats_ping;
+
+static stats_ping stats;
+
 /*
     -- set_stats_ping_default --
     Desc :
@@ -18,20 +31,109 @@
     In-param :
         None
     Out-param :
-        stats : stats_ping struct to be initialized
+        None
     Return value :
         None
 */
-void set_stats_ping_default(/*@out@*/stats_ping* stats){
+void set_stats_ping_default(){
 
-    stats->sum = 0.0;
-    stats->max = 0.0;
-    stats->min = 100.0;
-    stats->mean = 0.0;
-    stats->nb_high = 0;
-    stats->nb_loss = 0;
-    stats->nb_ping = 0;
+    stats.max = 0.0;
+    stats.min = 100.0;
+    stats.mean = 0.0;
+    stats.nb_high = 0;
+    stats.nb_loss = 0;
+    stats.nb_ping = 0;
 
+}
+
+/*
+    -- get_max --
+    Desc :
+        Get max (stats)
+    In-param :
+        None
+    Out-param :
+        None
+    Return value :
+        stats max
+*/
+double get_max(){
+    return stats.max;
+}
+
+/*
+    -- get_min --
+    Desc :
+        Get min (stats)
+    In-param :
+        None
+    Out-param :
+        None
+    Return value :
+        stats min
+*/
+double get_min(){
+    return stats.min;
+}
+
+/*
+    -- get_mean --
+    Desc :
+        Get mean (stats)
+    In-param :
+        None
+    Out-param :
+        None
+    Return value :
+        stats mean
+*/
+double get_mean(){
+    return stats.mean;
+}
+
+/*
+    -- get_high --
+    Desc :
+        Get high (stats)
+    In-param :
+        None
+    Out-param :
+        None
+    Return value :
+        stats high
+*/
+int get_high(){
+    return stats.nb_high;
+}
+
+/*
+    -- get_loss --
+    Desc :
+        Get loss (stats)
+    In-param :
+        None
+    Out-param :
+        None
+    Return value :
+        stats loss
+*/
+int get_loss(){
+    return stats.nb_loss;
+}
+
+/*
+    -- get_reached --
+    Desc :
+        Get reached (stats)
+    In-param :
+        None
+    Out-param :
+        None
+    Return value :
+        stats reached
+*/
+int get_reached(){
+    return stats.nb_ping;
 }
 
 /*
@@ -191,13 +293,13 @@ void write_ping_log(char* new_ping){
     Desc :
         Send a mail with all ping stats data
     In-param :
-        stats : ping stats data
+        None
     Out-param :
         None
     Return value :
         None
 */
-void send_stats_mail(stats_ping *stats){
+void send_stats_mail(){
     
     /* Variable */
     char mail_msg[256];
@@ -206,7 +308,7 @@ void send_stats_mail(stats_ping *stats){
         
     /* Sendmail command */
     (void) snprintf(mail_msg,256,"ping-report\n - Mean = %lf\n - Max = %lf\n - Min = %lf\n - High = %d\n - Loss = %d\n - Reached = %d\n",
-                    stats->mean,stats->max,stats->min,stats->nb_high,stats->nb_loss,stats->nb_ping);
+                    stats.mean,stats.max,stats.min,stats.nb_high,stats.nb_loss,stats.nb_ping);
     (void) snprintf(command,512,"echo \"%s\" | msmtp %s",mail_msg,dest_mail);
     (void) system(command);
 }
@@ -219,17 +321,18 @@ void send_stats_mail(stats_ping *stats){
     In-param :
         None
     Out-param :
-        stats : struct with all ping stats data filled
+        None
     Return value :
         None
 */
-void get_stats_ping(stats_ping *stats){
+void get_stats_ping(){
     
     /* Variables */
     double ping = 0.0;
     FILE* fd;
     char* read_line = NULL;
     size_t n = 0;
+    double sum = 0.0;
 
     /* Open log file */
     fd = fopen(get_all_ping(),"r");
@@ -245,7 +348,7 @@ void get_stats_ping(stats_ping *stats){
 
             /* Check if the ping is flagged as LOSS */
             if(strcmp(read_line,"LOSS") == 0){
-                stats->nb_loss++;
+                stats.nb_loss++;
             }else{
                 /* Evaluate the ping as a double */
                 ping = strtod(read_line,NULL);
@@ -254,21 +357,21 @@ void get_stats_ping(stats_ping *stats){
                     /* Ignore null ping */
                 }else{
                     /* Number of ping readed (for mean calculation) */
-                    stats->nb_ping++;
+                    stats.nb_ping++;
                     /* Max ping */
-                    if(ping > stats->max){
-                        stats->max = ping;
+                    if(ping > stats.max){
+                        stats.max = ping;
                     }
                     /* Min ping */
-                    if(ping < stats->min){
-                        stats->min = ping;
+                    if(ping < stats.min){
+                        stats.min = ping;
                     }
                     /* Number of ping above 100 ms */
                     if(ping > 100.0){
-                        stats->nb_high++;
+                        stats.nb_high++;
                     }
                     /* Sum (for mean calculation) */
-                    stats->sum += ping;
+                    sum += ping;
                 }
             } 
             free(read_line);
@@ -276,7 +379,7 @@ void get_stats_ping(stats_ping *stats){
         }
     
         /* Mean calculation */
-        stats->mean = stats->sum / (double) stats->nb_ping;
+        stats.mean = sum / (double) stats.nb_ping;
         (void) fclose(fd);
 
     }else{

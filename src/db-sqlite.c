@@ -67,24 +67,24 @@ int insert_ping(double ping){
     Desc :
         Insert ping stats in db
     In-param :
-        ping stats
+        None
     Out-param :
         None
     Return value :
         sqlite3_exec rc
 */
-int insert_ping_stats(stats_ping stats){
+int insert_ping_stats(){
     
     int rc = 0;
     char statement[128];
 
     (void) snprintf(statement,128,"INSERT INTO ping_stats VALUES (%lf,%lf,%lf,%d,%d,%d,%d)",
-                    stats.max,
-                    stats.min,
-                    stats.mean,
-                    stats.nb_high,
-                    stats.nb_loss,
-                    stats.nb_ping,
+                    get_max(),
+                    get_min(),
+                    get_mean(),
+                    get_high(),
+                    get_loss(),
+                    get_reached(),
                     (int) time(NULL));
 
     rc = sqlite3_exec(db,statement,NULL,NULL,NULL);
