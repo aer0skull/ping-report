@@ -28,7 +28,6 @@
     FILE* fd = NULL;
     char* read_line = NULL;
     size_t n = 0;
-    int rc;
     size_t nmatch = 2;
     regex_t *p_reg;
     regmatch_t* pmatch;
@@ -70,15 +69,14 @@
 
     /* Read file */
     while(getline(&read_line,&n,fd) != -1){
-
+        
         if(read_line == NULL){
             break;
         }
 
         /* Exec regex to find ping */
-        rc = regexec(p_reg,read_line, nmatch, pmatch, 0);
 
-        if(rc == 0){
+        if(regexec(p_reg,read_line,nmatch,pmatch,0) == 0){
 
             /* Extract ping position from read line */
             start = (int) pmatch[1].rm_so;
@@ -203,22 +201,23 @@ static void send_stats_mail(double mean, double max, double min, int nb_high, in
 void set_stats_ping(){
     
     /* Variables */
-    double ping = 0.0;
     FILE* fd;
-    char* read_line = NULL;
-    size_t n = 0;
-    double sum = 0.0;
-    double max = 0.0;
-    double min = 100.0;
-    double mean = 0.0;
-    int nb_high = 0;
-    int nb_loss = 0;
-    int nb_ping = 0;
-
     /* Open log file */
     fd = fopen(get_all_ping(),"r");
     
     if(fd != NULL){
+        /* Stats variables */
+        double ping = 0.0;
+        double sum = 0.0;
+        double max = 0.0;
+        double min = 100.0;
+        double mean = 0.0;
+        int nb_high = 0;
+        int nb_loss = 0;
+        int nb_ping = 0;
+        char* read_line = NULL;    
+        size_t n = 0;
+    
         /* Read file */
         while(getline(&read_line,&n,fd) != -1){
             
@@ -266,12 +265,12 @@ void set_stats_ping(){
         send_stats_mail(mean,max,min,nb_high,nb_loss,nb_ping);
         insert_ping_stats(mean,max,min,nb_high,nb_loss,nb_ping);
 
+        if(read_line != NULL){
+            free(read_line);
+        }
+
     }else{
         perror("stats : ");
-    }
-
-    if(read_line != NULL){
-        free(read_line);
     }
 }
 
