@@ -125,7 +125,7 @@ void daemon_work(){
 
         /* if time == HH:00, insert stats in db */
         if((utc_time->tm_min == 0) && (flag != 0)){
-            get_stats_ping();
+            set_stats_ping();
             insert_ping_stats();
             flag = 0;
         }
@@ -133,7 +133,7 @@ void daemon_work(){
         /* if time = 00:00, send mail */
         if((utc_time->tm_hour == 0) && (utc_time->tm_min == 0) && (flag != 0)){
             /* Get ping stats */
-            get_stats_ping();
+            set_stats_ping();
             /* Remove all-ping.log file */
             remove_file(get_all_ping());
             /* Send mail */

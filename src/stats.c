@@ -12,17 +12,12 @@
 #include "../include/db-sqlite.h"
 
 /* Globals */
-/* struct stats_ping : Handle ping data */
-typedef struct stats_ping{
-    double max;
-    double min;
-    double mean;
-    int nb_high;
-    int nb_loss;
-    int nb_ping;
-} stats_ping;
-
-static stats_ping stats;
+static double max;
+static double min;
+static double mean;
+static int nb_high;
+static int nb_loss;
+static int nb_ping;
 
 /*
     -- set_stats_ping_default --
@@ -37,12 +32,12 @@ static stats_ping stats;
 */
 void set_stats_ping_default(){
 
-    stats.max = 0.0;
-    stats.min = 100.0;
-    stats.mean = 0.0;
-    stats.nb_high = 0;
-    stats.nb_loss = 0;
-    stats.nb_ping = 0;
+    max = 0.0;
+    min = 100.0;
+    mean = 0.0;
+    nb_high = 0;
+    nb_loss = 0;
+    nb_ping = 0;
 
 }
 
@@ -58,7 +53,7 @@ void set_stats_ping_default(){
         stats max
 */
 double get_max(){
-    return stats.max;
+    return max;
 }
 
 /*
@@ -73,7 +68,7 @@ double get_max(){
         stats min
 */
 double get_min(){
-    return stats.min;
+    return min;
 }
 
 /*
@@ -88,7 +83,7 @@ double get_min(){
         stats mean
 */
 double get_mean(){
-    return stats.mean;
+    return mean;
 }
 
 /*
@@ -103,7 +98,7 @@ double get_mean(){
         stats high
 */
 int get_high(){
-    return stats.nb_high;
+    return nb_high;
 }
 
 /*
@@ -118,7 +113,7 @@ int get_high(){
         stats loss
 */
 int get_loss(){
-    return stats.nb_loss;
+    return nb_loss;
 }
 
 /*
@@ -133,7 +128,7 @@ int get_loss(){
         stats reached
 */
 int get_reached(){
-    return stats.nb_ping;
+    return nb_ping;
 }
 
 /*
@@ -308,7 +303,7 @@ void send_stats_mail(){
         
     /* Sendmail command */
     (void) snprintf(mail_msg,256,"ping-report\n - Mean = %lf\n - Max = %lf\n - Min = %lf\n - High = %d\n - Loss = %d\n - Reached = %d\n",
-                    stats.mean,stats.max,stats.min,stats.nb_high,stats.nb_loss,stats.nb_ping);
+                    mean,max,min,nb_high,nb_loss,nb_ping);
     (void) snprintf(command,512,"echo \"%s\" | msmtp %s",mail_msg,dest_mail);
     (void) system(command);
 }
@@ -325,7 +320,7 @@ void send_stats_mail(){
     Return value :
         None
 */
-void get_stats_ping(){
+void set_stats_ping(){
     
     /* Variables */
     double ping = 0.0;
@@ -348,7 +343,7 @@ void get_stats_ping(){
 
             /* Check if the ping is flagged as LOSS */
             if(strcmp(read_line,"LOSS") == 0){
-                stats.nb_loss++;
+                nb_loss++;
             }else{
                 /* Evaluate the ping as a double */
                 ping = strtod(read_line,NULL);
@@ -357,18 +352,18 @@ void get_stats_ping(){
                     /* Ignore null ping */
                 }else{
                     /* Number of ping readed (for mean calculation) */
-                    stats.nb_ping++;
+                    nb_ping++;
                     /* Max ping */
-                    if(ping > stats.max){
-                        stats.max = ping;
+                    if(ping > max){
+                        max = ping;
                     }
                     /* Min ping */
-                    if(ping < stats.min){
-                        stats.min = ping;
+                    if(ping < min){
+                        min = ping;
                     }
                     /* Number of ping above 100 ms */
                     if(ping > 100.0){
-                        stats.nb_high++;
+                        nb_high++;
                     }
                     /* Sum (for mean calculation) */
                     sum += ping;
@@ -379,7 +374,7 @@ void get_stats_ping(){
         }
     
         /* Mean calculation */
-        stats.mean = sum / (double) stats.nb_ping;
+        mean = sum / (double) nb_ping;
         (void) fclose(fd);
 
     }else{

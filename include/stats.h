@@ -3,7 +3,7 @@
 
 /*@null@*/char* get_ping_from_temp_log();
 void write_ping_log(char* new_ping);
-void get_stats_ping();
+void set_stats_ping();
 void send_stats_mail();
 void set_stats_ping_default();
 
