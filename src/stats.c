@@ -78,6 +78,7 @@ void set_stats_ping_default(/*@out@*/stats_ping* stats){
         if(p_reg != NULL){
             free(p_reg);
         }
+        (void) fclose(fd);
         return ping; /* NULL */
     }
 
@@ -170,6 +171,7 @@ void write_ping_log(char* new_ping){
         if(new_ping == NULL){
             new_ping = (char *) malloc(5*sizeof(char));
             if(new_ping == NULL){
+                (void) fclose(fd);
                 return;
             }
             (void) snprintf(new_ping,5*sizeof(char),"LOSS");
