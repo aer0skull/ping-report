@@ -65,7 +65,7 @@ static const char* get_log_file_dir(){
 void set_configuration(){
     
     /* Variables */
-    FILE* fd = NULL;
+    FILE* fd;
     char* config_line = NULL;
     int   int_value = 0;
 

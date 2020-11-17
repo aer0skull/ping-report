@@ -76,12 +76,9 @@ void daemon_work(){
 
     /* Variables */
     int keep_working = 1;
-    char* ping = NULL;
     char command[128];
     int flag = 1;
     int ping_interval;
-    time_t t;
-    struct tm* utc_time;
 
     /* Init utils globals */
     if(init_globals() != 0){
@@ -104,6 +101,11 @@ void daemon_work(){
 
     /* Main loop */
     while(keep_working != 0){
+        /* Loop variables */
+        char* ping = NULL;
+        time_t t;
+        struct tm* utc_time;
+        
         /* Ping request */
         (void) system(command);
         /* Get ping value as a string */
