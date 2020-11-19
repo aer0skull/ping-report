@@ -8,13 +8,8 @@
 
 /* File globals */
 static const char CONF_FILE[] = "/etc/opt/ping-report/ping-report.conf";
-
-typedef struct configuration{
-    int log_file_dir;
-    int ping_interval;
-} configuration;
-
-static configuration configs = {0, 0};
+static int log_file_number = 0;
+static int ping_interval = 0;
 
 static const char *log_file[] = {
     "/var/log/ping-report",
@@ -33,7 +28,7 @@ static const char *log_file[] = {
         None 
 */
 int get_ping_interval(){
-    return configs.ping_interval;
+    return ping_interval;
 }
 
 /*
@@ -48,7 +43,7 @@ int get_ping_interval(){
         None 
 */
 static const char* get_log_file_dir(){
-    return log_file[configs.log_file_dir];
+    return log_file[log_file_number];
 }
 
 /*
@@ -79,10 +74,10 @@ void set_configuration(){
                     // Comment line : ignore it
                 }else{
                     if(sscanf(config_line,"log_file_dir=%d\n",&int_value) == 1){
-                        configs.log_file_dir = int_value;
+                        log_file_number = int_value;
                     }
                     if(sscanf(config_line,"ping_interval=%d\n",&int_value) == 1){
-                        configs.ping_interval = int_value;
+                        ping_interval = int_value;
                     }
                 }
             }
