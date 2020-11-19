@@ -62,6 +62,83 @@ int create_daemon(){
 }
 
 /*
+    -- ping_request --
+    Desc :
+        Ping the DNS (1.1.1.1) then write the ping in log file
+    In-param :
+        None
+    Out-param :
+        None
+    Return value :
+        None
+*/
+static void ping_request(){
+    
+    /* Variables */    
+    char* ping;
+    static char command[128] = "";
+
+    if(!strcmp(command,"")){
+        /* Create ping command (with output in filename) */
+        (void) snprintf(command,128,"ping -c 1 1.1.1.1 > %s",get_last_ping());
+    }
+
+    /* ping command */
+    (void) system(command);
+    /* Get ping value as a string */
+    ping = get_ping_from_temp_log();
+    if(ping != NULL) {
+        /* Write ping in all-ping.log */
+        write_ping_log(ping);
+    }
+
+}
+
+/*
+    -- send_check --
+    Desc :
+        Send if send_stats_ping is needed and if so, do it
+    In-param :
+        None
+    Out-param :
+        None
+    Return value :
+        None
+*/
+static void send_check(){
+
+    /* Variables */
+    time_t t;
+    struct tm* utc_time;
+    static int flag = 1;
+
+    /* Get time */
+    t = time(NULL);
+    utc_time = localtime(&t);
+
+    /* Set flag to avoid sending numerous mail at HH:00 */
+    if((utc_time->tm_min != 0)&& (flag == 0)){
+        flag = 1;
+    }
+
+    /* if time == HH:00, insert stats in db */
+    if((utc_time->tm_min == 0) && (flag != 0)){
+        set_stats_ping();
+        flag = 0;
+    }
+
+    /* if time = 00:00, send mail */
+    if((utc_time->tm_hour == 0) && (utc_time->tm_min == 0) && (flag != 0)){
+        /* Get ping stats */
+        set_stats_ping();
+        /* Remove all-ping.log file */
+        remove_file(get_all_ping());
+        /* Set flag to avoid sending numerous mail at HH:00 */
+        flag = 0;
+    }
+}
+
+/*
     -- daemon_work --
     Desc :
         Function which contain main loop of the daemon
@@ -76,8 +153,6 @@ void daemon_work(){
 
     /* Variables */
     int keep_working = 1;
-    char command[128];
-    int flag = 1;
     int ping_interval;
 
     /* Init utils globals */
@@ -95,55 +170,18 @@ void daemon_work(){
     if(db_connect()){
         return;
     }
-
-    /* Create ping command (with output in filename) */
-    (void) snprintf(command,128,"ping -c 1 1.1.1.1 > %s",get_last_ping());
-
     /* Main loop */
     while(keep_working != 0){
-        /* Loop variables */
-        char* ping;
-        time_t t;
-        struct tm* utc_time;
-        
-        /* Ping request */
-        (void) system(command);
-        /* Get ping value as a string */
-        ping = get_ping_from_temp_log();
-        if(ping != NULL) {
-            /* Write ping in all-ping.log */
-            write_ping_log(ping);
-        }
+       
+        /* Launch ping command */
+        ping_request();
 
-        /* Get time */
-        t = time(NULL);
-        utc_time = localtime(&t);
-
-        /* Set flag to avoid sending numerous mail at HH:00 */
-        if((utc_time->tm_min != 0)&& (flag == 0)){
-            flag = 1;
-        }
-
-        /* if time == HH:00, insert stats in db */
-        if((utc_time->tm_min == 0) && (flag != 0)){
-            set_stats_ping();
-            flag = 0;
-        }
-
-        /* if time = 00:00, send mail */
-        if((utc_time->tm_hour == 0) && (utc_time->tm_min == 0) && (flag != 0)){
-            /* Get ping stats */
-            set_stats_ping();
-            /* Remove all-ping.log file */
-            remove_file(get_all_ping());
-            /* Set flag to avoid sending numerous mail at HH:00 */
-            flag = 0;
-        }
+        /* Send stats if time is correct */    
+        send_check();
 
         /* ping_interval */
         usleep(ping_interval*1000);
 
-        keep_working = (int) t;
     }
 
     /* Disconnect sqlite db */
