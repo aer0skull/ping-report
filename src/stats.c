@@ -152,7 +152,6 @@ void write_ping_log(char* new_ping){
             (void) snprintf(new_ping,5*sizeof(char),"LOSS");
         }
         (void) fwrite(new_ping, sizeof(char), strlen(new_ping), fd);
-        (void) insert_ping(strtod(new_ping,NULL));
         (void) fclose(fd);
     }else{
         perror("write ping : ");
@@ -263,7 +262,7 @@ void set_stats_ping(){
         (void) fclose(fd);
 
         send_stats_mail(mean,max,min,nb_high,nb_loss,nb_ping);
-        insert_ping_stats(mean,max,min,nb_high,nb_loss,nb_ping);
+        insert_hourly_report(mean,max,min,nb_high,nb_loss,nb_ping);
 
         if(read_line != NULL){
             free(read_line);

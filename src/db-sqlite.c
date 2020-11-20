@@ -40,9 +40,9 @@ int db_disconnect(){
 }
 
 /*
-    -- insert_ping --
+    -- insert_hourly_report --
     Desc :
-        Insert ping in db
+        Insert ping hourly stats
     In-param :
         ping value
     Out-param :
@@ -50,47 +50,17 @@ int db_disconnect(){
     Return value :
         sqlite3_exec rc
 */
-int insert_ping(double ping){
-    
-    int rc = 0;
-    char statement[64];
-
-    (void) snprintf(statement,64,"INSERT INTO ping VALUES (%lf,%d)",ping,(int) time(NULL));
-
-    rc = sqlite3_exec(db,statement,NULL,NULL,NULL);
-
-    return rc;
-}
-
-/*
-    -- insert_ping_stats --
-    Desc :
-        Insert ping stats in db
-    In-param :
-        None
-    Out-param :
-        None
-    Return value :
-        sqlite3_exec rc
-*/
-int insert_ping_stats(double mean, double max, double min, int high, int loss, int reached){
+int insert_hourly_report(double mean, double max, double min, int high, int loss, int reached){
     
     int rc = 0;
     char statement[128];
+    time_t t = time(NULL);
+    struct tm* tm = localtime(&t);
 
-    (void) snprintf(statement,128,"INSERT INTO ping_stats VALUES (%lf,%lf,%lf,%d,%d,%d,%d)",
-                    max,
-                    min,
-                    mean,
-                    high,
-                    loss,
-                    reached,
-                    (int) time(NULL));
+    (void) snprintf(statement,128,"INSERT INTO HourlyReport VALUES (%lf,%lf,%lf,%d,%d,%d,'%d-%d-%d',%d)",
+                    max,min,mean,high,loss,reached,tm->tm_year+1900,tm->tm_mon+1,tm->tm_mday,tm->tm_hour);
 
     rc = sqlite3_exec(db,statement,NULL,NULL,NULL);
 
     return rc;
 }
-
-
-
