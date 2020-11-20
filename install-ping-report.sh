@@ -79,7 +79,6 @@ fi
 
 #Create SQLITE DB
 
-
 if test -f "$DB"; then
     echo "db already exists, no actions needed"
 else
