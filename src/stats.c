@@ -43,7 +43,7 @@
     }
 
     /* Open ping log file */
-    fd = fopen(get_last_ping(),"r");
+    fd = fopen("/var/log/ping-report/last-ping.log","r");
     if(fd == NULL){
         free(p_reg);
         return ping; /* NULL */
@@ -140,7 +140,7 @@ void write_ping_log(char* new_ping){
     FILE* fd;
 
     /* Open log file */
-    fd = fopen(get_all_ping(),"a+");
+    fd = fopen("/var/log/ping-report/all-ping.log","a+");
     
     if(fd != NULL){
         if(new_ping == NULL){
@@ -176,7 +176,7 @@ void set_stats_ping(){
     /* Variables */
     FILE* fd;
     /* Open log file */
-    fd = fopen(get_all_ping(),"r");
+    fd = fopen("/var/log/ping-report/all-ping.log","r");
     
     if(fd != NULL){
         /* Stats variables */

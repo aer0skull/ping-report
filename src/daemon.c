@@ -76,12 +76,7 @@ static void ping_request(){
     
     /* Variables */    
     char* ping;
-    static char command[128] = "";
-
-    if(!strcmp(command,"")){
-        /* Create ping command (with output in filename) */
-        (void) snprintf(command,128,"ping -c 1 1.1.1.1 > %s",get_last_ping());
-    }
+    static char command[128] = "ping -c 1 1.1.1.1 > /var/log/ping-report/last-ping.log";
 
     /* ping command */
     (void) system(command);
@@ -124,7 +119,7 @@ static void send_check(){
     /* if time == HH:00, insert stats in db */
     if((utc_time->tm_min == 0) && (flag != 0)){
         set_stats_ping();
-        remove_file(get_all_ping());
+        remove_file("/var/log/ping-report/all-ping.log");
         flag = 0;
     }
 
@@ -193,18 +188,9 @@ void daemon_work(){
 
     /* Variables */
     int keep_working = 1;
-    int ping_interval;
-
-    /* Init utils globals */
-    if(init_globals() != 0){
-        return;
-    }
 
     /* Write daemon pid in log file */
     write_pid_file();
-
-    /* ping sleep time (from config file) */
-    ping_interval = get_ping_interval();
 
     /* Connect db sqlite */
     if(db_connect()){
@@ -222,8 +208,8 @@ void daemon_work(){
         /* Check end ping-report */
         keep_working = check_keep_working();
 
-        /* ping_interval */
-        usleep(ping_interval*1000);
+        /* ping_interval 100 ms */
+        usleep(100*1000);
 
     }
 

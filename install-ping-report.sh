@@ -7,8 +7,6 @@ BIN_OPT_DIR=/opt/ping-report/bin
 BIN_DIR=/bin
 LOG_DIR=/var/log/ping-report
 STATUS_LOG=/var/log/ping-report/status.log
-CONF_DIR=/etc/opt/ping-report
-CONF=./res/ping-report.conf
 DB_SCRIPT=./res/ping-report-db.sql
 DB_DIR=/srv/ping-report
 DB=/srv/ping-report/ping-report.db
@@ -53,13 +51,6 @@ fi
 touch $STATUS_LOG
 chmod 666 $STATUS_LOG
 
-#Create CONF_DIR
-if test -d "$CONF_DIR"; then
-    echo "conf dir already exists, no actions needed"
-else
-    mkdir $CONF_DIR
-fi
-
 #Create DB_DIR
 if test -d "$DB_DIR"; then
     echo "database dir already exists, no actions needed"
@@ -75,9 +66,6 @@ mv $BIN $BIN_OPT_DIR
 
 #Copy launch script to OPT_DIR
 cp $SCRIPT $OPT_DIR
-
-#Copy conf file to CONF_DIR
-cp $CONF $CONF_DIR
 
 #Create DYN_LINK
 if test -f "$DYN_LINK"; then
