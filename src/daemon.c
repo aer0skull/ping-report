@@ -116,7 +116,7 @@ static void send_check(){
     t = time(NULL);
     utc_time = localtime(&t);
 
-    /* Set flag to avoid sending numerous mail at HH:00 */
+    /* Set flag to avoid sending multiple time the same data at HH:00 */
     if((utc_time->tm_min != 0)&& (flag == 0)){
         flag = 1;
     }

@@ -161,32 +161,6 @@ void write_ping_log(char* new_ping){
 }
 
 /*
-    -- send_stats_mail --
-    Desc :
-        Send a mail with all ping stats data
-    In-param :
-        None
-    Out-param :
-        None
-    Return value :
-        None
-*/
-static void send_stats_mail(double mean, double max, double min, int nb_high, int nb_loss, int nb_ping){
-    
-    /* Variable */
-    char mail_msg[256];
-    char dest_mail[] = "maxime.menault@gmail.com";
-    char command[512];       
-        
-    /* Sendmail command */
-    (void) snprintf(mail_msg,256,"ping-report\n - Mean = %lf\n - Max = %lf\n - Min = %lf\n - High = %d\n - Loss = %d\n - Reached = %d\n",
-                    mean,max,min,nb_high,nb_loss,nb_ping);
-    (void) snprintf(command,512,"echo \"%s\" | msmtp %s",mail_msg,dest_mail);
-    (void) system(command);
-}
-
-
-/*
     -- set_stats_ping --
     Desc :
         Function which calculate statistics about ping values, from log file.
@@ -261,7 +235,6 @@ void set_stats_ping(){
         mean = sum / (double) nb_ping;
         (void) fclose(fd);
 
-        //send_stats_mail(mean,max,min,nb_high,nb_loss,nb_ping);
         insert_hourly_report(mean,max,min,nb_high,nb_loss,nb_ping);
 
         if(read_line != NULL){
