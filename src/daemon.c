@@ -124,18 +124,10 @@ static void send_check(){
     /* if time == HH:00, insert stats in db */
     if((utc_time->tm_min == 0) && (flag != 0)){
         set_stats_ping();
+        remove_file(get_all_ping());
         flag = 0;
     }
 
-    /* if time = 00:00, send mail */
-    if((utc_time->tm_hour == 0) && (utc_time->tm_min == 0) && (flag != 0)){
-        /* Get ping stats */
-        set_stats_ping();
-        /* Remove all-ping.log file */
-        remove_file(get_all_ping());
-        /* Set flag to avoid sending numerous mail at HH:00 */
-        flag = 0;
-    }
 }
 
 /*

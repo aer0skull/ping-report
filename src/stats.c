@@ -261,7 +261,7 @@ void set_stats_ping(){
         mean = sum / (double) nb_ping;
         (void) fclose(fd);
 
-        send_stats_mail(mean,max,min,nb_high,nb_loss,nb_ping);
+        //send_stats_mail(mean,max,min,nb_high,nb_loss,nb_ping);
         insert_hourly_report(mean,max,min,nb_high,nb_loss,nb_ping);
 
         if(read_line != NULL){
