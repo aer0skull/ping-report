@@ -18,6 +18,15 @@ DYN_LINK=/bin/ping-report
 
 #Start install script
 
+#Check 1st arg
+case $1 in
+--full-install) rm $DB;
+                echo "full install of ping-report ...";;
+-f)             rm $DB;
+                echo "full install of ping-report ...";;
+*)              echo "default install of ping-report ...";;
+esac
+
 #Create OPT_DIR
 if test -d "$OPT_DIR"; then
     echo "opt dir already exists, no actions needed."
