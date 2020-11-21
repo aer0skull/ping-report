@@ -6,6 +6,7 @@ OPT_DIR=/opt/ping-report
 BIN_OPT_DIR=/opt/ping-report/bin
 BIN_DIR=/bin
 LOG_DIR=/var/log/ping-report
+STATUS_LOG=/var/log/ping-report/status.log
 CONF_DIR=/etc/opt/ping-report
 CONF=./res/ping-report.conf
 DB_SCRIPT=./res/ping-report-db.sql
@@ -47,6 +48,10 @@ if test -d "$LOG_DIR"; then
 else
     mkdir $LOG_DIR
 fi
+
+#Create / Erase STATUS_LOG
+touch $STATUS_LOG
+chmod 666 $STATUS_LOG
 
 #Create CONF_DIR
 if test -d "$CONF_DIR"; then

@@ -131,6 +131,54 @@ static void send_check(){
 }
 
 /*
+    -- check_keep_working --
+    Desc :
+        Check if ping-report need to be ended
+    In-param :
+        None
+    Out-param :
+        None
+    Return value :
+        keep_working : 1 continue, 0 end
+*/
+static int check_keep_working(){
+
+    /* Variables */
+    FILE* fd;
+    char read_line[5];
+
+    fd = fopen(STATUS_LOG,"r");
+
+    if(fd == NULL){
+        // Error occured while reading status log file, stop ping-report
+        printf("Err\n");
+        return 0;
+    }
+
+    /* Read file */
+    if(fread(read_line,sizeof(char),4,fd) != 0){
+        
+        (void) fclose(fd);
+        read_line[4] = '\0';
+
+        if(strcmp(read_line,"STOP") == 0){
+            // stop ping-report
+            printf("Stop\n");
+            return 0;
+        }else{
+            // continue ping-report
+            printf("%s : Continue\n",read_line);
+            return 1;
+        }
+    }else{
+        // Error occured while reading status log file, stop ping-report
+        printf("Nothing to read\n");
+        (void) fclose(fd);
+        return 1;
+    }
+}
+
+/*
     -- daemon_work --
     Desc :
         Function which contain main loop of the daemon
@@ -170,6 +218,9 @@ void daemon_work(){
 
         /* Send stats if time is correct */    
         send_check();
+
+        /* Check end ping-report */
+        keep_working = check_keep_working();
 
         /* ping_interval */
         usleep(ping_interval*1000);
